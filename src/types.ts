@@ -9,6 +9,7 @@ type Card = {
 type Hand = Card[];
 
 type Players = Record<string, Hand>;
+type PlayerValuation = Record<string, HandEvaluation>;
 
 type HandEvaluation = {
   name: string;
@@ -16,34 +17,27 @@ type HandEvaluation = {
   kickers: number;
 };
 
-type PlayerValuation = Record<string, HandEvaluation>;
-
 type FrequencyCounter = Record<string, number>;
-
 type Results = Record<string, FrequencyCounter>;
 
+type Ranking = Record<string, string>;
 type PresentableResults = {
   winners: string[];
   ties: string[];
   ranking: Ranking;
 };
 
-type Ranking = Record<string, string>;
-
 type ValidCards = boolean[];
-
 type ValidationTable = Record<string, ValidCards>;
 
-export {
-  Card,
-  FrequencyCounter,
-  Hand,
-  HandEvaluation,
-  Players,
-  PlayerValuation,
-  PresentableResults,
-  Ranking,
-  Results,
-  ValidationTable,
-  ValidCards,
-};
+export type { Card };
+export type { FrequencyCounter };
+export type { Hand };
+export type { HandEvaluation };
+export type { Players };
+export type { PlayerValuation };
+export type { PresentableResults };
+export type { Ranking };
+export type { Results };
+export type { ValidationTable };
+export type { ValidCards };

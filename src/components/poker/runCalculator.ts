@@ -2,25 +2,21 @@ import { mergeResults } from "./results";
 import U from "./utils";
 import { Hand, Players, Results } from "../../types";
 
-const runPokerOdds = async (deck: Hand, table: Players): Promise<Results> =>
-  new Promise((resolve) => {
-    const community = table.community.filter((card) => card.index !== -1);
-    const communities = U.getCommunityCombinations(deck, community);
-    const players = U.filterActivePlayers(table);
-    const [split1, split2, split3, split4] = U.splitArrayToChunks(
-      communities,
-      communities.length / 4
-    );
-    Promise.all([
-      U.runWorker(split1, players),
-      U.runWorker(split2, players),
-      U.runWorker(split3, players),
-      U.runWorker(split4, players),
-    ]).then((splitResults: Results[]) => {
-      const activeVillains = Object.keys(players).length - 1;
-      const results = mergeResults(splitResults, activeVillains);
-      resolve(results);
-    });
-  });
+const runPokerOdds = async (deck: Hand, players: Players): Promise<Results> => {
+  const community = players.community.filter((card) => card.index !== -1);
+  const communities = U.getCommunityCombinations(deck, community);
+  const activePlayers = U.getActivePlayers(players);
+  const activeVillains = Object.keys(activePlayers).length - 1;
+  const chunks = U.splitArrayToChunks(
+    communities,
+    Math.ceil(communities.length / 4)
+  );
+
+  const splitResults = await Promise.all(
+    chunks.map((chunk) => U.runWorker(chunk, activePlayers))
+  );
+  const results = mergeResults(splitResults, activeVillains);
+  return results;
+};
 
 export { runPokerOdds };

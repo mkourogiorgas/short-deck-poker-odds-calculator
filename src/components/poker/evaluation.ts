@@ -2,18 +2,25 @@ import { evaluateHandStrength } from "./hand";
 import U from "./utils";
 import { Hand, HandEvaluation, Players, PlayerValuation } from "../../types";
 
+const isHandStronger = (
+  currentHand: HandEvaluation,
+  bestHand: HandEvaluation | null
+): boolean => {
+  return (
+    !bestHand ||
+    currentHand.value > bestHand.value ||
+    (currentHand.value === bestHand.value &&
+      currentHand.kickers > bestHand.kickers)
+  );
+};
+
 const evaluatePlayer = (community: Hand, player: Hand): HandEvaluation => {
   const possibleHands = U.getCombinations([...community, ...player], 5);
   let bestHand: HandEvaluation | null = null;
   for (const hand of possibleHands) {
-    const evaluation = evaluateHandStrength(hand);
-    if (
-      !bestHand ||
-      evaluation.value > bestHand.value ||
-      (evaluation.value === bestHand.value &&
-        evaluation.kickers > bestHand.kickers)
-    ) {
-      bestHand = evaluation;
+    const currentHand = evaluateHandStrength(hand);
+    if (isHandStronger(currentHand, bestHand)) {
+      bestHand = currentHand;
     }
   }
   return bestHand!;
@@ -30,14 +37,8 @@ const evaluateTable = (community: Hand, players: Players): PlayerValuation => {
 const getWinners = (players: PlayerValuation): string[] => {
   let bestHand: HandEvaluation | null = null;
   for (const key in players) {
-    const evaluation = players[key];
-    if (
-      !bestHand ||
-      evaluation.value > bestHand.value ||
-      (evaluation.value === bestHand.value &&
-        evaluation.kickers > bestHand.kickers)
-    ) {
-      bestHand = evaluation;
+    if (isHandStronger(players[key], bestHand)) {
+      bestHand = players[key];
     }
   }
   const winners: string[] = [];

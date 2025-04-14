@@ -2,31 +2,23 @@ import { Hand, FrequencyCounter, Players, Results } from "../../types";
 
 const getCombinations = (
   cards: Hand,
-  combinationLength: number,
-  combinations: Hand[] = [],
-  inProgressCombination: Hand = [],
-  index: number = 0
-) => {
-  if (!combinationLength) {
-    return [];
+  size: number,
+  start = 0,
+  combo: Hand = [],
+  result: Hand[] = []
+): Hand[] => {
+  if (combo.length === size) {
+    result.push([...combo]);
+    return result;
   }
-  const isCombinationLengthReached = combinationLength == 1;
-  for (let loopIndex = index; loopIndex < cards.length; loopIndex++) {
-    const combination = [...inProgressCombination, cards[loopIndex]];
 
-    if (isCombinationLengthReached) {
-      combinations.push(combination);
-    } else {
-      getCombinations(
-        cards,
-        combinationLength - 1,
-        combinations,
-        combination,
-        loopIndex + 1
-      );
-    }
+  for (let i = start; i < cards.length; i++) {
+    combo.push(cards[i]);
+    getCombinations(cards, size, i + 1, combo, result);
+    combo.pop();
   }
-  return combinations;
+
+  return result;
 };
 
 const getCommunityCombinations = (deck: Hand, community: Hand): Hand[] => {
@@ -56,7 +48,7 @@ const updateFrequencyCounter = (
   object[key] = (object[key] || 0) + 1;
 };
 
-const filterActivePlayers = (table: Players): Players => {
+const getActivePlayers = (table: Players): Players => {
   const players: Players = {};
   Object.entries(table).filter(([key, value]) => {
     if (value.length === 2 && value[0].index !== -1) {
@@ -68,27 +60,19 @@ const filterActivePlayers = (table: Players): Players => {
 
 const runWorker = (communities: Hand[], players: Players): Promise<Results> =>
   new Promise((resolve) => {
-    const myWorker = new Worker(new URL("./worker.js", import.meta.url), {
+    const worker = new Worker(new URL("./worker.js", import.meta.url), {
       type: "module",
     });
-    myWorker.onmessage = (event) => {
+    worker.onmessage = (event) => {
       resolve(event.data);
     };
-    myWorker.postMessage({ communities, players });
+    worker.postMessage({ communities, players });
   });
 
-const numberOfActiveVillains = (table: Players): number =>
-  Object.values(table).reduce((accumulator, player) => {
-    return player.length === 2 && player[0].index !== -1
-      ? accumulator + 1
-      : accumulator;
-  }, 0);
-
 export default {
-  filterActivePlayers,
+  getActivePlayers,
   getCombinations,
   getCommunityCombinations,
-  numberOfActiveVillains,
   splitArrayToChunks,
   updateFrequencyCounter,
   runWorker,
